@@ -1,5 +1,6 @@
-import { Body, Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { PrismaService } from '../services/prisma.service';
+import { CreateArticlesDTO } from './articles.dto';
 
 @Controller('articles')
 export class ArticlesController {
@@ -15,6 +16,22 @@ export class ArticlesController {
     return this.prismaService.article.findFirst({
       where: {
         id: 1,
+      },
+    });
+  }
+
+  @Post('create')
+  async createArticle(@Body() article: CreateArticlesDTO) {
+    const { tags, ...articleData } = article;
+
+    return this.prismaService.article.create({
+      data: {
+        ...articleData,
+        tags: tags
+          ? {
+              connect: tags.map((id) => ({ id })),
+            }
+          : undefined,
       },
     });
   }
