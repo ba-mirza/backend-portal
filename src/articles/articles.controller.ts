@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { PrismaService } from '../services/prisma.service';
 import { CreateArticlesDTO } from './articles.dto';
 
@@ -7,15 +7,15 @@ export class ArticlesController {
   constructor(private prismaService: PrismaService) {}
 
   @Get('all')
-  getAllArticles() {
+  async getAllArticles() {
     return this.prismaService.article.findMany();
   }
 
   @Get(':id')
-  getArticle() {
+  async getArticle(@Param('id') id: string) {
     return this.prismaService.article.findFirst({
       where: {
-        id: 1,
+        id: parseInt(id),
       },
     });
   }
@@ -36,7 +36,21 @@ export class ArticlesController {
     });
   }
 
-  // updateArticle() {}
+  @Post('delete')
+  async deleteArticle(@Body('id') id: string) {
+    try {
+      await this.prismaService.article.delete({ where: { id: parseInt(id) } });
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
-  // deleteArticle(id: number) {}
+  @Post('delete-selected-by-id')
+  async deleteSelectedByIds(@Body() ids: number[]) {
+    await this.prismaService.article.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+  }
 }
