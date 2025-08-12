@@ -1,7 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-import { IsEmail } from 'class-validator/types/decorator/string/IsEmail';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
-export class AuthDTO {
+export class LoginRequestDTO {
   @IsString({ message: 'Email should be a string' })
   @IsNotEmpty({ message: 'Field is required' })
   @IsEmail({}, { message: 'Email should be a valid email' })
