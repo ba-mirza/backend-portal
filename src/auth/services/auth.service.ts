@@ -46,25 +46,32 @@ export class AuthService {
 
   async login(dto: LoginRequestDTO) {
     try {
-      const user = await this.prismaService.auth.findUnique({
+      const authData = await this.prismaService.auth.findUnique({
         where: { login: dto.email },
         include: { user: true },
       });
-      if (!user) throw new UnauthorizedException('Invalid login credentials');
+      if (!authData) throw new UnauthorizedException('Invalid login credentials');
 
-      const valid = await bcrypt.compare(dto.password, user.password);
+      const valid = await bcrypt.compare(dto.password, authData.password);
       if (!valid)
         throw new UnauthorizedException('Invalid password credentials');
 
-      return this.generateToken(user.id, user.login);
+      return this.generateToken(authData.user, authData.login);
     } catch (e) {
       console.error(e);
       throw e;
     }
   }
 
-  private generateToken(userId: number, email: string) {
-    const payload = { sub: userId, email };
-    return { accessToken: this.jwtService.sign(payload) };
+  private generateToken(user: any, email: string) {
+    const payload = { sub: user.id, email };
+    return {
+      accessToken: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+      }
+    };
   }
 }
