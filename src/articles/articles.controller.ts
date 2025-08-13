@@ -47,7 +47,7 @@ export class ArticlesController {
     }
   }
 
-  @Post('delete-selected-by-id')
+  @Post('delete-by-id')
   async deleteSelectedByIds(@Body() ids: number[]) {
     await this.prismaService.article.deleteMany({
       where: {
