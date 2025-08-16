@@ -2,11 +2,15 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../services/prisma.service';
 import { CreateArticlesDTO } from './articles.dto';
 import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
+import { SlugService } from '../services/slug.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('articles')
 export class ArticlesController {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private slugService: SlugService,
+  ) {}
 
   @Get('all')
   async getAllArticles() {
@@ -25,6 +29,8 @@ export class ArticlesController {
   @Post('create')
   async createArticle(@Body() article: CreateArticlesDTO) {
     const { tags, ...articleData } = article;
+
+    articleData.slug = this.slugService.toSlug(articleData.title);
 
     return this.prismaService.article.create({
       data: {
