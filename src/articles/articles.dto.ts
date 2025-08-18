@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsInt,
@@ -8,15 +9,12 @@ import {
 } from 'class-validator';
 
 import { PartialType } from '@nestjs/mapped-types';
+import { Transform } from 'class-transformer';
 
-export class CreateArticlesDTO {
+export class CreateArticleRequestDTO {
   @IsString()
   @IsNotEmpty()
   title: string;
-
-  @IsString()
-  @IsNotEmpty()
-  slug: string;
 
   @IsOptional()
   @IsString()
@@ -26,8 +24,54 @@ export class CreateArticlesDTO {
   @IsNotEmpty()
   content: string;
 
+  @IsBoolean()
+  isPublished: boolean;
+
+  @Transform(({ value }) => parseInt(value))
+  @IsInt()
+  category: number;
+
+  @Transform(({ value }) => parseInt(value))
+  @IsInt()
+  authorId: number;
+
+  // Преобразуем строку JSON в массив чисел
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+    return Array.isArray(value) ? value : undefined;
+  })
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+}
+
+export class RequestArticlesDTO {
+  @IsString()
   @IsNotEmpty()
-  coverImage: string;
+  title: string;
+
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  excerpt?: string;
+
+  @IsString()
+  content: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -59,4 +103,4 @@ export class CreateArticlesDTO {
   tags?: number[];
 }
 
-export class UpdateArticlesDTO extends PartialType(CreateArticlesDTO) {}
+export class UpdateArticlesDTO extends PartialType(RequestArticlesDTO) {}
