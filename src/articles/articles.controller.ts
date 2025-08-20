@@ -4,6 +4,7 @@ import {
   Controller,
   FileTypeValidator,
   Get,
+  Logger,
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
@@ -22,6 +23,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @UseGuards(JwtAuthGuard)
 @Controller('articles')
 export class ArticlesController {
+  private readonly logger = new Logger(ArticlesController.name);
+
   constructor(
     private prismaService: PrismaService,
     private slugService: SlugService,
@@ -50,9 +53,6 @@ export class ArticlesController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({
-            fileType: /(jpg|jpeg|png)$/,
-          }),
         ],
         fileIsRequired: false,
       }),
@@ -60,12 +60,14 @@ export class ArticlesController {
     file?: Express.Multer.File,
   ) {
     try {
+      this.logger.log('Creating new article...');
       const { tags, category, ...articleData } = article;
 
       const slugOfArticle = this.slugService.toSlug(articleData.title);
       let coverImageUrl: string | null = null;
 
       if (file) {
+        this.logger.log('Put file object to AWS::');
         const fileExtension = file.originalname.split('.').pop();
         const uniqueFileName = `articles/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
 
@@ -73,6 +75,8 @@ export class ArticlesController {
           uniqueFileName,
           file.buffer,
         );
+
+        this.logger.log(`Uploaded image ${coverImageUrl}`);
       }
 
       let tagConnections;
@@ -93,12 +97,14 @@ export class ArticlesController {
         };
       }
 
-      return this.prismaService.article.create({
+      const newArticle = await this.prismaService.article.create({
         data: {
           ...articleData,
           slug: slugOfArticle,
           coverImage: coverImageUrl,
           categoryId: category,
+          metaTitle: articleData.title,
+          metaDescription: articleData.excerpt,
           tags: tagConnections,
         },
         include: {
@@ -106,6 +112,9 @@ export class ArticlesController {
           tags: true,
         },
       });
+
+      this.logger.log('Successfully created article');
+      return newArticle;
     } catch (error) {
       console.error('Error creating article:', error);
       throw new BadRequestException('Failed to create article');

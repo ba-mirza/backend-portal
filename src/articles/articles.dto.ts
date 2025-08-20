@@ -24,6 +24,7 @@ export class CreateArticleRequestDTO {
   @IsNotEmpty()
   content: string;
 
+  @Transform(({ value }) => Boolean(value))
   @IsBoolean()
   isPublished: boolean;
 
@@ -35,7 +36,6 @@ export class CreateArticleRequestDTO {
   @IsInt()
   authorId: number;
 
-  // Преобразуем строку JSON в массив чисел
   @IsOptional()
   @Transform(({ value }) => {
     if (typeof value === 'string') {
