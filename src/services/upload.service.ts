@@ -32,7 +32,6 @@ export class UploadService extends S3Client {
           Key: fileName,
           Body: file,
           ContentType: this.getContentType(fileName),
-          ACL: 'public-read',
         }),
       );
 
