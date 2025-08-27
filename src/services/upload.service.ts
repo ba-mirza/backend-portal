@@ -35,7 +35,6 @@ export class UploadService extends S3Client {
         }),
       );
 
-      console.log('Successfully uploaded image file');
       return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${fileName}`;
     } catch (error) {
       console.error('Error uploading file to S3:', error);
